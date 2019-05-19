@@ -154,8 +154,7 @@ typedef struct {            /* tcp control type */
     int state;              /* state (0:close,1:wait,2:connect) */
     char saddr[256];        /* address string */
     int port;               /* port */
-    /*struct sockaddr_in addr;*/ /* address resolved */
-	struct sockaddr_in6 addr;
+    struct sockaddr_in6 addr; /* address resolved */
     socket_t sock;          /* socket descriptor */
     int tcon;               /* reconnect time (ms) (-1:never,0:now) */
     unsigned int tact;      /* data active tick */
@@ -1065,8 +1064,7 @@ static int gentcp(tcp_t *tcp, int type, char *msg)
     tracet(3,"gentcp: type=%d\n",type);
     
     /* generate socket */
-    /*if ((tcp->sock=socket(AF_INET,SOCK_STREAM,0))==(socket_t)-1) {*/
-	if ((tcp->sock=socket(AF_INET6,SOCK_STREAM,0))==(socket_t)-1) {
+    if ((tcp->sock=socket(AF_INET6,SOCK_STREAM,0))==(socket_t)-1) {
         sprintf(msg,"socket error (%d)",errsock());
         tracet(1,"gentcp: socket error err=%d\n",errsock());
         tcp->state=-1;
@@ -1077,10 +1075,8 @@ static int gentcp(tcp_t *tcp, int type, char *msg)
         return 0;
     }
     memset(&tcp->addr,0,sizeof(tcp->addr));
-    /*tcp->addr.sin_family=AF_INET;
-    tcp->addr.sin_port=htons(tcp->port);*/
     tcp->addr.sin6_family=AF_INET6;
-	tcp->addr.sin6_port=htons(tcp->port);
+    tcp->addr.sin6_port=htons(tcp->port);
     
     if (type==0) { /* server socket */
     
@@ -1099,7 +1095,7 @@ static int gentcp(tcp_t *tcp, int type, char *msg)
         listen(tcp->sock,5);
     }
     else { /* client socket */
-        if (!(hp=gethostbyname2(tcp->saddr,AF_INET6))) {
+        if (!(hp=gethostbyname(tcp->saddr))) {
             sprintf(msg,"address error (%s)",tcp->saddr);
             tracet(1,"gentcp: gethostbyname error addr=%s err=%d\n",tcp->saddr,errsock());
             closesocket(tcp->sock);
@@ -1108,7 +1104,6 @@ static int gentcp(tcp_t *tcp, int type, char *msg)
             tcp->tdis=tickget();
             return 0;
         }
-        /*memcpy(&tcp->addr.sin_addr,hp->h_addr,hp->h_length);*/
         memcpy(&tcp->addr.sin6_addr,hp->h_addr,hp->h_length);
     }
     tcp->state=1;
@@ -1189,8 +1184,7 @@ static void updatetcpsvr(tcpsvr_t *tcpsvr, char *msg)
 /* accept client connection --------------------------------------------------*/
 static int accsock(tcpsvr_t *tcpsvr, char *msg)
 {
-    /*struct sockaddr_in addr;*/
-	struct sockaddr_in6 addr;
+    struct sockaddr_in6 addr;
     socket_t sock;
     socklen_t len=sizeof(addr);
     int i,err;
@@ -1365,10 +1359,10 @@ static tcpcli_t *opentcpcli(const char *path, char *msg)
     char port[256]="";
     
     tracet(3,"opentcpcli: path=%s\n",path);
+    
     if (!(tcpcli=(tcpcli_t *)malloc(sizeof(tcpcli_t)))) return NULL;
     *tcpcli=tcpcli0;
     decodetcppath(path,tcpcli->svr.saddr,port,NULL,NULL,NULL,NULL);
-
     if (sscanf(port,"%d",&tcpcli->svr.port)<1) {
         sprintf(msg,"port error: %s",port);
         tracet(2,"opentcp: port error port=%s\n",port);
