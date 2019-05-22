@@ -44,6 +44,7 @@ static char srctbl[1024]="";           /* source table file */
 /* help text -----------------------------------------------------------------*/
 static const char *help[]={
 "",
+"str2str version: rtklib_v6 v0.01",
 " usage: str2str [-in stream] [-out stream [-out stream...]] [options]",
 "",
 " Input data from a stream and divide and output them to multiple streams",
